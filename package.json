@@ -1,0 +1,30 @@
+{
+  "name": "scheduler-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "main": "dist/index.js",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js",
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "lint": "eslint . --ext .ts,.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "mongodb": "^6.17.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.12",
+    "@types/express": "^4.17.21",
+    "@types/mongodb": "^4.0.11",
+    "typescript": "^5.8.3"
+  }
+}
