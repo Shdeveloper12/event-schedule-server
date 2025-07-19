@@ -3,12 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "main": "dist/index.js",
     "start": "node dist/index.js",
-    "dev": "tsc && node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "watch": "tsc --watch",
-    "lint": "eslint . --ext .ts,.js",
+    "clean": "rimraf dist",
+    "type-check": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -24,7 +23,8 @@
   "devDependencies": {
     "@types/cors": "^2.8.12",
     "@types/express": "^4.17.21",
-    "@types/mongodb": "^4.0.11",
+    "@types/node": "^24.0.15",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
   }
 }
