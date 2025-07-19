@@ -35,7 +35,7 @@ async function run() {
 
     const database = client.db("eventScheduler");
     const eventsCollection = database.collection<Event>("events");
-    // await client.connect();
+    await client.connect();
 app.post("/events", async (req: Request, res: Response) => {
       const event: Event = req.body;
       const category = categorizeEvents(event.title, event.notes);
@@ -49,7 +49,15 @@ app.post("/events", async (req: Request, res: Response) => {
     });
 
     app.get("/events", (req: Request, res: Response) => {
-      res.json(events);
+      const sortedEvents = events.sort((a, b) => {
+        const aTime = new Date(a.date).getTime();
+        const bTime = new Date(b.date).getTime();
+        if (isNaN(aTime) || isNaN(bTime)) {
+          return 0; 
+        }
+        return aTime - bTime;
+      });
+      res.json(sortedEvents);
     });
 
 
