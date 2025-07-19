@@ -32,7 +32,27 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+
+    const database = client.db("eventScheduler");
+    const eventsCollection = database.collection<Event>("events");
     // await client.connect();
+app.post("/events", async (req: Request, res: Response) => {
+      const event: Event = req.body;
+      const category = categorizeEvents(event.title, event.notes);
+      event.category = category;
+
+      // Save the event to the database
+      await eventsCollection.insertOne(event);
+      res.status(201).json(event);
+      events.push(event);
+      res.status(201).json(event);
+    });
+
+    app.get("/events", (req: Request, res: Response) => {
+      res.json(events);
+    });
+
+
 
     app.get("/", (req: Request, res: Response) => {
       res.send("Event Scheduler Server Running");
