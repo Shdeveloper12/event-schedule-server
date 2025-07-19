@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import { Event } from './types';
+import {categorizeEvents} from './utils';
+
 
 dotenv.config();
 
