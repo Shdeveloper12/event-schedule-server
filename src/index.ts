@@ -3,16 +3,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import { Event } from './types';
-import {categorizeEvents} from './utils';
-
+import { categorizeEvents } from './utils';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
-
-
-let events: Event[] = [];
 
 // middleware
 app.use(cors());
@@ -32,35 +28,68 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-
     const database = client.db("eventScheduler");
     const eventsCollection = database.collection<Event>("events");
     await client.connect();
-app.post("/events", async (req: Request, res: Response) => {
-      const event: Event = req.body;
-      const category = categorizeEvents(event.title, event.notes);
-      event.category = category;
+    console.log("Connected to MongoDB!");
 
-      // Save the event to the database
-      await eventsCollection.insertOne(event);
-      res.status(201).json(event);
-      events.push(event);
-      res.status(201).json(event);
+    app.post("/events", async (req: Request, res: Response) => {
+      try {
+        const event: Event = req.body;
+        const category = categorizeEvents(event.title, event.notes);
+        event.category = category;
+
+        // Save the event to the database
+        const result = await eventsCollection.insertOne(event);
+        res.status(201).json({ ...event, _id: result.insertedId });
+      } catch (error) {
+        res.status(500).json({ message: "Error creating event", error });
+      }
     });
 
-    app.get("/events", (req: Request, res: Response) => {
-      const sortedEvents = events.sort((a, b) => {
-        const aTime = new Date(a.date).getTime();
-        const bTime = new Date(b.date).getTime();
-        if (isNaN(aTime) || isNaN(bTime)) {
-          return 0; 
+    app.get("/events", async (req: Request, res: Response) => {
+      try {
+        // Fetch events from database and sort by date
+        const sortedEvents = await eventsCollection.find().sort({ date: 1 }).toArray();
+        res.json(sortedEvents);
+      } catch (error) {
+        res.status(500).json({ message: "Error fetching events", error });
+      }
+    });
+
+    app.put('/events/:id', async (req: Request, res: Response) => {
+      try {
+        const { id } = req.params;
+        const result = await eventsCollection.updateOne(
+          { id: id },
+          { $set: { archived: true } }
+        );
+        
+        if (result.matchedCount === 0) {
+          return res.status(404).json({ message: "Event not found" });
         }
-        return aTime - bTime;
-      });
-      res.json(sortedEvents);
+        
+        const updatedEvent = await eventsCollection.findOne({ id: id });
+        res.status(200).json(updatedEvent);
+      } catch (error) {
+        res.status(500).json({ message: "Error updating event", error });
+      }
     });
 
-
+    app.delete('/events/:id', async (req: Request, res: Response) => {
+      try {
+        const { id } = req.params;
+        const result = await eventsCollection.deleteOne({ id: id });
+        
+        if (result.deletedCount === 0) {
+          return res.status(404).json({ message: "Event not found" });
+        }
+        
+        res.status(200).json({ message: "Event deleted successfully" });
+      } catch (error) {
+        res.status(500).json({ message: "Error deleting event", error });
+      }
+    });
 
     app.get("/", (req: Request, res: Response) => {
       res.send("Event Scheduler Server Running");
