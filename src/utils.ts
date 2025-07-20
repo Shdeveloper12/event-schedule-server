@@ -10,6 +10,8 @@ export function categorizeEvents(
     "anniversary",
     "personal",
     "family",
+    "vacation",
+    "appointment",
   ];
   const lowerTitle = title.toLowerCase();
   const lowerNotes = notes ? notes.toLowerCase() : "";

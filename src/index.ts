@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
 import { Event } from './types';
 import { categorizeEvents } from './utils';
 
@@ -39,6 +39,11 @@ async function run() {
         const category = categorizeEvents(event.title, event.notes);
         event.category = category;
 
+        // Generate a custom ID if not provided
+        if (!event.id) {
+          event.id = new Date().getTime().toString() + Math.random().toString(36).substr(2, 9);
+        }
+
         // Save the event to the database
         const result = await eventsCollection.insertOne(event);
         res.status(201).json({ ...event, _id: result.insertedId });
@@ -60,16 +65,26 @@ async function run() {
     app.put('/events/:id', async (req: Request, res: Response) => {
       try {
         const { id } = req.params;
+        const updateData = req.body;
+        
+        // Try to find by custom id first, then by MongoDB _id
+        let query;
+        if (ObjectId.isValid(id)) {
+          query = { $or: [{ id: id }, { _id: new ObjectId(id) }] };
+        } else {
+          query = { id: id };
+        }
+        
         const result = await eventsCollection.updateOne(
-          { id: id },
-          { $set: { archived: true } }
+          query,
+          { $set: updateData }
         );
         
         if (result.matchedCount === 0) {
           return res.status(404).json({ message: "Event not found" });
         }
         
-        const updatedEvent = await eventsCollection.findOne({ id: id });
+        const updatedEvent = await eventsCollection.findOne(query);
         res.status(200).json(updatedEvent);
       } catch (error) {
         res.status(500).json({ message: "Error updating event", error });
@@ -79,7 +94,16 @@ async function run() {
     app.delete('/events/:id', async (req: Request, res: Response) => {
       try {
         const { id } = req.params;
-        const result = await eventsCollection.deleteOne({ id: id });
+        
+        // Try to find by custom id first, then by MongoDB _id
+        let query;
+        if (ObjectId.isValid(id)) {
+          query = { $or: [{ id: id }, { _id: new ObjectId(id) }] };
+        } else {
+          query = { id: id };
+        }
+        
+        const result = await eventsCollection.deleteOne(query);
         
         if (result.deletedCount === 0) {
           return res.status(404).json({ message: "Event not found" });
